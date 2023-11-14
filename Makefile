@@ -1,3 +1,3 @@
 .PHONY: build
 build:
-	go build -o kubectl-kill-ns ./cmd/main.go
+	go build -ldflags "-s -w" -o kubectl-kill-ns ./cmd/main.go
