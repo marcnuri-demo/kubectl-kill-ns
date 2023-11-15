@@ -2,7 +2,6 @@ package killns
 
 import (
 	"context"
-	"errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -23,14 +22,20 @@ func KillNamespace(kubeConfig *rest.Config, namespace string) {
 	if len(strings.TrimSpace(namespace)) == 0 {
 		panic("namespace not provided")
 	}
+	if kubeConfig == nil {
+		panic(".kube/config not provided")
+	}
 	client, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		panic(err)
 	}
-	errDelete := client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	if errDelete := client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}); errDelete != nil {
+		panic(errDelete)
+	}
 	ns, errGet := client.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
-	if err := errors.Join(errDelete, errGet); err != nil {
-		panic(err)
+	if errGet != nil {
+		// Likely NS not found due to previous deletion
+		return
 	}
 	if ns.Spec.Finalizers == nil || len(ns.Spec.Finalizers) == 0 {
 		return
