@@ -8,6 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -47,6 +49,16 @@ func setupEnvTest() *envtest.Environment {
 	return &envtest.Environment{
 		BinaryAssetsDirectory: filepath.Join(envTestDir, "k8s", versionDir),
 	}
+}
+
+func fakeConfig() *clientcmdapi.Config {
+	fakeConfig := clientcmdapi.NewConfig()
+	fakeConfig.CurrentContext = "fake-context"
+	fakeConfig.Clusters["fake"] = clientcmdapi.NewCluster()
+	fakeConfig.Clusters["fake"].Server = "localhost"
+	fakeConfig.Contexts["fake-context"] = clientcmdapi.NewContext()
+	fakeConfig.Contexts["fake-context"].Cluster = "fake"
+	return fakeConfig
 }
 
 func TestMain(m *testing.M) {
@@ -129,6 +141,31 @@ func TestKillNamespace(t *testing.T) {
 		_, err := client.CoreV1().Namespaces().Get(context.TODO(), "finalizer", metav1.GetOptions{})
 		if err.Error() != "namespaces \"finalizer\" not found" {
 			t.Errorf("Namespace should have been deleted, but it wasn't")
+		}
+	})
+}
+
+func TestLoadKubeConfig(t *testing.T) {
+	originalHome := os.Getenv("HOME")
+	defer os.Setenv("HOME", originalHome)
+	t.Run("With valid .kube/config", func(t *testing.T) {
+		// Given
+		home := t.TempDir()
+		os.MkdirAll(filepath.Join(home, ".kube"), 0755)
+		clientcmd.WriteToFile(*fakeConfig(), filepath.Join(home, ".kube", "config"))
+		os.Setenv("HOME", home)
+		// When
+		_, err := LoadKubeConfig()
+		// Then
+		if err != nil {
+			t.Errorf("LoadKubeConfig returned an error: %v", err)
+		}
+	})
+	t.Run("With missing .kube/config", func(t *testing.T) {
+		os.Setenv("HOME", "/non/existing/directory")
+		_, err := LoadKubeConfig()
+		if err == nil || err.Error() != "stat /non/existing/directory/.kube/config: no such file or directory" {
+			t.Errorf("LoadKubeConfig should have returned an error for non-existing kubeconfig, got: %s", err)
 		}
 	})
 }
