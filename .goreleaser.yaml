@@ -1,0 +1,45 @@
+project_name: kubectl-kill-ns
+
+builds:
+  - binary: kubectl-kill-ns
+    main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+      - ppc64le
+    ignore:
+      # don't build arm/arm64 for darwin or windows
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: arm64
+      - goos: darwin
+        goarch: ppc64le
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: ppc64le
+
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Tag }}-{{ .Os }}-{{ .Arch }}"
+    wrap_in_directory: true
+    files:
+      - LICENSE
+
+checksum:
+  name_template: 'CHECKSUM'
+
+release:
+  draft: true
+  replace_existing_draft: true
