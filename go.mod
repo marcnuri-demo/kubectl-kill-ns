@@ -5,10 +5,10 @@ go 1.23.5
 require (
 	github.com/spf13/afero v1.12.0
 	k8s.io/api v0.32.2
-	k8s.io/apimachinery v0.33.0-alpha.1
+	k8s.io/apimachinery v0.33.0-alpha.2
 	k8s.io/client-go v0.32.2
-	sigs.k8s.io/controller-runtime v0.16.3
-	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20231114105341-b81fc66fded5
+	sigs.k8s.io/controller-runtime v0.20.2
+	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250222214226-d6b34400308c
 )
 
 require (

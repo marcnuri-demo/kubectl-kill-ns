@@ -30,9 +30,8 @@ func setupEnvTest() *envtest.Environment {
 	envTest := &env.Env{
 		FS:  afero.Afero{Fs: afero.NewOsFs()},
 		Out: os.Stdout,
-		Client: &remote.Client{
-			Bucket: "kubebuilder-tools",
-			Server: "storage.googleapis.com",
+		Client: &remote.HTTPClient{
+			IndexURL: remote.DefaultIndexURL,
 		},
 		Platform: versions.PlatformItem{
 			Platform: versions.Platform{
